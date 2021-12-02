@@ -16,6 +16,7 @@
 
 import ballerina/http;
 import ballerina/test;
+import ballerina/lang.value;
 
 @test:Config {
     groups: ["context"]
@@ -32,9 +33,24 @@ function testCreatingContextWithScalarValues() returns error? {
     http:Request request = new;
     http:RequestContext requestContext = new;
     Context context = check contextInit(requestContext, request);
-    test:assertEquals(<string> check context.get("String"), "Ballerina");
-    test:assertEquals(<int> check context.get("Int"), 5);
-    test:assertEquals(<boolean> check context.get("Boolean"), false);
+    value:Cloneable|isolated object {} stringValue = check context.get("String");
+    if stringValue is string {
+        test:assertEquals(stringValue, "Ballerina");
+    } else {
+        test:assertFail("Invalid type received for the context attribute");
+    }
+    value:Cloneable|isolated object {} intValue = check context.get("Int");
+    if intValue is int {
+        test:assertEquals(intValue, 5);
+    } else {
+        test:assertFail("Invalid type received for the context attribute");
+    }
+    value:Cloneable|isolated object {} booleanValue = check context.get("Boolean");
+    if booleanValue is boolean {
+        test:assertEquals(booleanValue, false);
+    } else {
+        test:assertFail("Invalid type received for the context attribute");
+    }
 }
 
 @test:Config {
@@ -66,11 +82,13 @@ function testRemovingAttributeFromContext() returns error? {
     http:Request request = new;
     http:RequestContext requestContext = new;
     Context context = check contextInit(requestContext, request);
-    var attribute1 = check context.remove("String");
-    test:assertTrue(attribute1 is string);
-    test:assertEquals(<string>attribute1, "Ballerina");
-
-    var attribute2 = context.remove("String");
+    value:Cloneable|isolated object {} attribute1 = check context.remove("String");
+    if attribute1 is string {
+        test:assertEquals(attribute1, "Ballerina");
+    } else {
+        test:assertFail("Invalid type received for the context attribute");
+    }
+    value:Cloneable|isolated object {} attribute2 = context.remove("String");
     test:assertTrue(attribute2 is Error);
     test:assertEquals((<Error>attribute2).message(), "Attribute with the key \"String\" not found in the context");
 }
@@ -88,10 +106,10 @@ function testRemovingObjectAttributeFromContext() returns error? {
     http:Request request = new;
     http:RequestContext requestContext = new;
     Context context = check contextInit(requestContext, request);
-    var attribute1 = check context.remove("HierarchicalServiceObject");
+    value:Cloneable|isolated object {} attribute1 = check context.remove("HierarchicalServiceObject");
     test:assertTrue(attribute1 is HierarchicalName);
 
-    var attribute2 = context.remove("String");
+    value:Cloneable|isolated object {} attribute2 = context.remove("String");
     test:assertTrue(attribute2 is Error);
     test:assertEquals((<Error>attribute2).message(), "Attribute with the key \"String\" not found in the context");
 }
@@ -109,7 +127,7 @@ function testRequestingInvalidAttributeFromContext() returns error? {
     http:Request request = new;
     http:RequestContext requestContext = new;
     Context context = check contextInit(requestContext, request);
-    var invalidAttribute = context.get("No");
+    value:Cloneable|isolated object {} invalidAttribute = context.get("No");
     test:assertTrue(invalidAttribute is Error);
     test:assertEquals((<Error>invalidAttribute).message(), "Attribute with the key \"No\" not found in the context");
 }
